@@ -22,6 +22,8 @@ public:
         setVariableProperties();
         //setConstraintProperties();
         setDerivativeProperties();
+
+        calcHess(H_, q_);
     }
 
     double evaluateFC(const double* const x,
@@ -29,9 +31,6 @@ public:
                       double* const objGrad,
                       double* const jac)
     {
-        Eigen::MatrixXd H;
-        Eigen::VectorXd q;
-        calcHess(H, q);
 
         Eigen::VectorXd s = Eigen::VectorXd::Zero(N_+3);
         for(int i=0; i<N_+3; ++i)
@@ -42,19 +41,16 @@ public:
             p += v_[i]*v_[i];
         p = p * weight_[0]*dt_;
 
-        return (1.0/2.0)*s.dot(H*s) + q.dot(s) + p;
+        return (1.0/2.0)*s.dot(H_*s) + q_.dot(s) + p;
     }
 
     int evaluateGA(const double* const x, double* const objGrad, double* const jac)
     {
-        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(N_+3, N_+3);
-        Eigen::VectorXd q = Eigen::VectorXd::Zero(N_+3);
         Eigen::VectorXd s = Eigen::VectorXd::Zero(N_+3);
         for(int i=0; i<N_+3; ++i)
             s[i] = x[i];
 
-        calcHess(H, q);
-        Eigen::VectorXd grad = H*s + q;
+        Eigen::VectorXd grad = H_*s + q_;
 
         for(int i=0; i<N_-2; ++i)
             objGrad[i] = grad(i);
@@ -67,23 +63,18 @@ public:
                      const double* const lambda,
                      double* const hess)
     {
-        Eigen::MatrixXd H;
-        Eigen::VectorXd q;
-
-        calcHess(H, q);
-
         for(int i=0; i<N_+3; ++i)
         {
-            hess[i] = objScaler*H(i,i);
+            hess[i] = objScaler*H_(i,i);
 
             if(i<N_+2)
-                hess[i+N_+3] = objScaler*H(i,i+1);
+                hess[i+N_+3] = objScaler*H_(i,i+1);
 
             if(i<N_+1)
-                hess[i+2*N_+5] = objScaler*H(i,i+2);
+                hess[i+2*N_+5] = objScaler*H_(i,i+2);
 
             if(i<N_)
-                hess[i+3*N_+6] = objScaler*H(i, i+3);
+                hess[i+3*N_+6] = objScaler*H_(i, i+3);
         }
 
         return 0;
@@ -261,13 +252,14 @@ private:
         qresult = -2 * weight_[0] * q;
     }
 
-
     int N_;
     std::vector<double> v_;
     std::array<double, 3> weight_;
     double dt_;
     double Smax_;
     double Smin_;
+    Eigen::MatrixXd H_;
+    Eigen::VectorXd q_;
 };
 
 
