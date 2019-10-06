@@ -13,8 +13,10 @@
 cmake_minimum_required(VERSION 2.8.6)
 
 project(KnitroExamples)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(OpenMP)
 if (OPENMP_FOUND)
   set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -22,6 +24,7 @@ if (OPENMP_FOUND)
 endif()
 
 include_directories(include)
+include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories($ENV{KNITRODIR}/include)
 
 set(KTR_RELEASE 1200)
@@ -31,12 +34,10 @@ if (APPLE)
   set(KNITRO_LIB "libknitro.dylib")
 endif()
 
-if(WIN32)
-  set(KNITRO_LIB "knitro${KTR_RELEASE}.lib")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
-endif()
-
 link_directories($ENV{KNITRODIR}/lib)
 
 add_executable(ExSpeedOptimizer src/ExSpeedOptimizer.cpp)
 target_link_libraries(ExSpeedOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
+
+add_executable(ExPositionOptimizer src/ExPositionOptimizer.cpp)
+target_link_libraries(ExPositionOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
