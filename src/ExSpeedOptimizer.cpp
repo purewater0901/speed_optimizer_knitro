@@ -48,15 +48,14 @@ int main()
     double a = 0.0;
 
     // Create a problem instance.
-    ProblemQCQP instance(n, v, omega, ds, a);
+    SpeedOptimizer instance(n, v, omega, ds, a);
 
     // Create a solver
     //knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
     knitro::KTRSolver solver(&instance);
+    solver.setParam("outlev", 0);
 
     int solveStatus = solver.solve();
-
-    printSolutionResults(solver, solveStatus);
 
     const std::vector<double>& point = solver.getXValues();
 
