@@ -16,14 +16,18 @@ public:
                       const double dt,
                       const double Smin,
                       const double Smax)
-            : KTRProblem(N+3, 0, 0, 4*N+6), N_(N), v_(v), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax)
+            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), v_(v), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
+    : KTRProblem(N+3, N), N_(N), v_(v), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
     {
         setObjectiveProperties();
         setVariableProperties();
-        //setConstraintProperties();
-        setDerivativeProperties();
+        setConstraintProperties();
+        //setDerivativeProperties();
 
         calcHess();
+        for(int i=0; i<N_; ++i)
+            p_ += v_[i]*v_[i];
+        p_ = p_ * weight_[0]*dt_;
     }
 
     double evaluateFC(const double* const x,
@@ -32,16 +36,43 @@ public:
                       double* const jac)
     {
 
+        /* Constraints */
+        //1. Linear Constraints
+        for(int i=0; i<N_; ++i)
+            c[i] = (x[i+1]-x[i])/dt_;
+
+
+        /* Objective Function */
+        /*
         Eigen::VectorXd s = Eigen::VectorXd::Zero(N_+3);
         for(int i=0; i<N_+3; ++i)
             s(i) = x[i];
 
-        double p = 0.0;
-        for(int i=0; i<N_; ++i)
-            p += v_[i]*v_[i];
-        p = p * weight_[0]*dt_;
+        return (1.0/2.0)*s.dot(H_*s) + q_.dot(s) + p_;
+         */
 
-        return (1.0/2.0)*s.dot(H_*s) + q_.dot(s) + p;
+
+        std::vector<double> v;
+        std::vector<double> acc;
+        std::vector<double> jerk;
+        v.resize(N_);
+        acc.resize(N_);
+        jerk.resize(N_);
+        double Jv = 0.0;
+        double Ja = 0.0;
+        double Jj = 0.0;
+
+        for(size_t i=0; i<N_; ++i)
+        {
+            v[i] = (x[i+1]-x[i])/dt_;
+            acc[i] = (x[i+2]-2*x[i+1]+x[i])/std::pow(dt_,2);
+            jerk[i] = (x[i+3]-3*x[i+2]+3*x[i+1]-x[i])/std::pow(dt_,3);
+            Jv += std::pow((v[i]-v_[i]),2);
+            Ja += std::pow(acc[i],2);
+            Jj += std::pow(jerk[i],2);
+        }
+
+        return weight_[0]*Jv + weight_[1]*Ja + weight_[2]*Jj;
     }
 
     int evaluateGA(const double* const x, double* const objGrad, double* const jac)
@@ -100,6 +131,16 @@ private:
 
         for(int i=0; i<N_+3; ++i)
             setXInitial(i, Smin_);
+    }
+
+    void setConstraintProperties()
+    {
+        for(size_t i=0; i<N_; ++i)
+        {
+            setConTypes(i, knitro::KTREnums::ConstraintType::ConLinear);
+            setConLoBnds(i, 0.0);
+            setConUpBnds(i, v_[i]);
+        }
     }
 
     void setDerivativeProperties()
@@ -260,6 +301,7 @@ private:
     double Smin_;
     Eigen::MatrixXd H_;
     Eigen::VectorXd q_;
+    double p_;
 };
 
 
