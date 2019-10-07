@@ -23,7 +23,7 @@ public:
         //setConstraintProperties();
         setDerivativeProperties();
 
-        calcHess(H_, q_);
+        calcHess();
     }
 
     double evaluateFC(const double* const x,
@@ -48,11 +48,11 @@ public:
     {
         Eigen::VectorXd s = Eigen::VectorXd::Zero(N_+3);
         for(int i=0; i<N_+3; ++i)
-            s[i] = x[i];
+            s(i) = x[i];
 
         Eigen::VectorXd grad = H_*s + q_;
 
-        for(int i=0; i<N_-2; ++i)
+        for(int i=0; i<N_+3; ++i)
             objGrad[i] = grad(i);
 
         return 0;
@@ -129,7 +129,7 @@ private:
         }
     }
 
-    void calcHess(Eigen::MatrixXd& Hresult, Eigen::VectorXd& qresult)
+    void calcHess()
     {
         Eigen::MatrixXd Hvel  = Eigen::MatrixXd::Zero(N_+3, N_+3);
         Eigen::MatrixXd Hacc  = Eigen::MatrixXd::Zero(N_+3, N_+3);
@@ -167,19 +167,19 @@ private:
         {
             if(i==0)
             {
-                Hacc(0, 0)  = 1;
-                Hacc(0, 1) = -2;
-                Hacc(0, 2) = 1;
-                Hacc(1, 0) = -2;
-                Hacc(1, 1) = 1;
+                Hacc(0, 0)  = 1.0;
+                Hacc(0, 1) = -2.0;
+                Hacc(0, 2) = 1.0;
+                Hacc(1, 0) = -2.0;
+                Hacc(1, 1) = 1.0;
             }
             else if(i==1)
             {
-                Hacc(1, 1) = 5;
-                Hacc(1, 2) = -4;
-                Hacc(1, 3) = 1;
-                Hacc(2, 1) = -4;
-                Hacc(3, 1) = 1;
+                Hacc(1, 1) = 5.0;
+                Hacc(1, 2) = -4.0;
+                Hacc(1, 3) = 1.0;
+                Hacc(2, 1) = -4.0;
+                Hacc(3, 1) = 1.0;
             }
             else
             {
@@ -248,8 +248,8 @@ private:
         Hjerk(N_+2,N_+1) = -3;
         Hjerk(N_+2,N_+2) = 1;
 
-        Hresult = (2*weight_[0]/dt_)*Hvel + (2*weight_[1]/std::pow(dt_,3))*Hacc + (2*weight_[2]/std::pow(dt_,5))*Hjerk;
-        qresult = -2 * weight_[0] * q;
+        H_ = (2*weight_[0]/dt_)*Hvel + (2*weight_[1]/std::pow(dt_,3))*Hacc + (2*weight_[2]/std::pow(dt_,5))*Hjerk;
+        q_ = -2 * weight_[0] * q;
     }
 
     int N_;
