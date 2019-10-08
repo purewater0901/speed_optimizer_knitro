@@ -80,8 +80,9 @@ int main()
     /*  Write to file*/
     std::ofstream writing_file;
     writing_file.open(filename, std::ios::out);
+    writing_file << "time" << "," << "reference_speed" << "," << "desired_speed" << "," << "result_speed" << std::endl;
     for(int i=0; i<N; ++i)
-        writing_file << i*dt << "," << vresult[i] << std::endl;
+        writing_file << i*dt << "," << Vr[i] << "," << Vd[i] << "," << vresult[i] << std::endl;
 
 
     /* open cv output */
