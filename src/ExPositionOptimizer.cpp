@@ -95,7 +95,16 @@ int main()
                 cv_offset(i*dt, -Vr[i], bg.cols, bg.rows),
                 cv_offset((i+1)*dt, -Vr[i+1], bg.cols, bg.rows),
                 cv::Scalar(0, 0, 255),
-                10);
+                5);
+    }
+    for(size_t i=0; i<Vd.size()-1; ++i)
+    {
+        cv::line(
+                bg,
+                cv_offset(i*dt, -Vd[i], bg.cols, bg.rows),
+                cv_offset((i+1)*dt, -Vd[i+1], bg.cols, bg.rows),
+                cv::Scalar(255, 0, 0),
+                5);
     }
     for(size_t i=0; i<N-1; ++i)
     {
@@ -104,7 +113,7 @@ int main()
                 cv_offset(i*dt, -vresult[i], bg.cols, bg.rows),
                 cv_offset((i+1)*dt, -vresult[i+1], bg.cols, bg.rows),
                 cv::Scalar(0, 0, 0),
-                10);
+                5);
     }
 
     cv::imshow("timed_optimized_speed", bg);
