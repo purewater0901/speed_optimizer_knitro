@@ -20,8 +20,8 @@ public:
                       const double V0,
                       const double a0,
                       const double j0)
-            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0),V0_(V0), a0_(a0), j0_(j0)
-    : KTRProblem(N+3, N), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0), V0_(V0), a0_(a0), j0_(j0)
+            //: KTRProblem(N+3, N+6, 0, 4*N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0),V0_(V0), a0_(a0), j0_(j0)
+    : KTRProblem(N+3, N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0), V0_(V0), a0_(a0), j0_(j0)
     {
         setObjectiveProperties();
         setVariableProperties();
@@ -41,9 +41,17 @@ public:
     {
 
         /* Constraints */
-        //1. Linear Constraints
+        //1. Linear Constraints (Inequality)
         for(int i=0; i<N_; ++i)
             c[i] = (x[i+1]-x[i])/dt_;
+
+        //2. Linear Constraints (Equality)
+        c[N_] = x[0];
+        c[N_+1] = x[1];
+        c[N_+2] = x[2];
+        c[N_+3] = x[N_-2] - 2*x[N_-1] + x[N_];
+        c[N_+4] = 2*x[N_-2] - 3*x[N_-1] + x[N_+1];
+        c[N_+5] = 3*x[N_-2] - 4*x[N_-1] + x[N_+2];
 
 
         /* Objective Function */
@@ -126,14 +134,7 @@ private:
     {
         setVarLoBnds(0, Smin_);
         setVarUpBnds(0, Smin_);
-        setVarLoBnds(1, dt_*V0_+Smin_);
-        setVarUpBnds(1, dt_*V0_+Smin_);
-        setVarLoBnds(2, a0_*dt_*dt_+2*dt_*V0_+Smin_);
-        setVarUpBnds(2, a0_*dt_*dt_+2*dt_*V0_+Smin_);
-        setVarLoBnds(3, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
-        setVarUpBnds(3, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
-
-        for(int i=4; i<N_+3; ++i)
+        for(int i=1; i<N_+3; ++i)
         {
             setVarLoBnds(i, Smin_);
             setVarUpBnds(i, Smax_);
@@ -149,11 +150,29 @@ private:
 
     void setConstraintProperties()
     {
+        //1. Linear Constraints(Inequality)
         for(size_t i=0; i<N_; ++i)
         {
             setConTypes(i, knitro::KTREnums::ConstraintType::ConLinear);
             setConLoBnds(i, 0.0);
             setConUpBnds(i, Vr_[i]);
+        }
+
+        //2. Linear Constraints(Equality)
+        setConTypes(N_, knitro::KTREnums::ConstraintType::ConLinear);
+        setConLoBnds(N_, dt_*V0_+Smin_);
+        setConUpBnds(N_, dt_*V0_+Smin_);
+        setConTypes(N_+1, knitro::KTREnums::ConstraintType::ConLinear);
+        setConLoBnds(N_+1, a0_*dt_*dt_+2*dt_*V0_+Smin_);
+        setConUpBnds(N_+1, a0_*dt_*dt_+2*dt_*V0_+Smin_);
+        setConTypes(N_+2, knitro::KTREnums::ConstraintType::ConLinear);
+        setConLoBnds(N_+2, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
+        setConUpBnds(N_+2, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
+        for(int i=N_+3; i<N_+6; ++i)
+        {
+            setConTypes(i, knitro::KTREnums::ConstraintType::ConLinear);
+            setConLoBnds(i, 0.0);
+            setConUpBnds(i, 0.0);
         }
     }
 
