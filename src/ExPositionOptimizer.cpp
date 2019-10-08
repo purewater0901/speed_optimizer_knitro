@@ -18,7 +18,7 @@ cv::Point2i cv_offset(float x, float y,int image_width=1000, int image_height=10
 
 int main()
 {
-    std::string filename = "/home/yutaka/speed_optimizer/timed_result.csv";
+    std::string filename = "../timed_result.csv";
     double Smin = 0.0;
     double Smax = 70.0;
     double T = 20;
@@ -28,26 +28,34 @@ int main()
     std::array<double, 3> weight = {10, 0.1, 0.1};
 
     //set speed
-    std::vector<double> v;
-    v.resize(N);
+    std::vector<double> Vr;  //restricted speed
+    std::vector<double> Vd;  //desired speed
+    Vr.resize(N);
+    Vd.resize(N);
     /*
     for(size_t i=0; i<v.size(); ++i)
         v[i] = 2.0;
         */
 
-    for(size_t i=1; i<v.size()/3; ++i)
-        v[i] = 3.0;
+    for(size_t i=1; i<Vr.size()/3; ++i)
+    {
+        Vr[i] = 3.0;
+        Vd[i] = Vr[i]-1.0;
+    }
 
-    for(size_t i=v.size()/3; i<v.size()*3/4; ++i)
-        v[i] = 4.0;
+    for(size_t i=Vr.size()/3; i<Vr.size()*3/4; ++i)
+    {
+        Vr[i] = 4.0;
+        Vd[i] = Vr[i]-1.0;
+    }
 
-    for(size_t i=v.size()*3/4; i<v.size(); ++i)
-        v[i] = 1.0;
+    for(size_t i=Vr.size()*3/4; i<Vr.size(); ++i)
+    {
+        Vr[i] = 2.0;
+        Vd[i] = Vr[i]-1.0;
+    }
 
-    v[0] = 0.0;
-    v[v.size()-1] = 0.0;
-
-    PositionOptimizer instance(N, v, weight, dt, Smin, Smax);
+    PositionOptimizer instance(N, Vr, Vd, weight, dt, Smin, Smax);
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
     //knitro::KTRSolver solver(&instance);
     int solveStatus = solver.solve();
@@ -75,14 +83,14 @@ int main()
 
     /* open cv output */
     cv::namedWindow("timed_optimized_speed", cv::WINDOW_NORMAL);
-    cv::Mat bg(1000, 2200, CV_8UC3, cv::Scalar(255, 255, 255));
+    cv::Mat bg(1000, 2000, CV_8UC3, cv::Scalar(255, 255, 255));
 
-    for(size_t i=0; i<v.size()-1; ++i)
+    for(size_t i=0; i<Vr.size()-1; ++i)
     {
         cv::line(
                 bg,
-                cv_offset(i*dt, -v[i], bg.cols, bg.rows),
-                cv_offset((i+1)*dt, -v[i+1], bg.cols, bg.rows),
+                cv_offset(i*dt, -Vr[i], bg.cols, bg.rows),
+                cv_offset((i+1)*dt, -Vr[i+1], bg.cols, bg.rows),
                 cv::Scalar(0, 0, 255),
                 10);
     }

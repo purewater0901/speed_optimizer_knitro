@@ -11,13 +11,14 @@ class PositionOptimizer : public knitro::KTRProblem
 {
 public:
     PositionOptimizer(const int N,
-                      const std::vector<double>& v,
+                      const std::vector<double>& Vr,
+                      const std::vector<double>& Vd,
                       const std::array<double, 3>& weight,
                       const double dt,
                       const double Smin,
                       const double Smax)
-            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), v_(v), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
-    : KTRProblem(N+3, N), N_(N), v_(v), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
+            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
+    : KTRProblem(N+3, N), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
     {
         setObjectiveProperties();
         setVariableProperties();
@@ -26,7 +27,7 @@ public:
 
         calcHess();
         for(int i=0; i<N_; ++i)
-            p_ += v_[i]*v_[i];
+            p_ += Vd_[i]*Vd_[i];
         p_ = p_ * weight_[0]*dt_;
     }
 
@@ -67,7 +68,7 @@ public:
             v[i] = (x[i+1]-x[i])/dt_;
             acc[i] = (x[i+2]-2*x[i+1]+x[i])/std::pow(dt_,2);
             jerk[i] = (x[i+3]-3*x[i+2]+3*x[i+1]-x[i])/std::pow(dt_,3);
-            Jv += std::pow((v[i]-v_[i]),2);
+            Jv += std::pow((v[i]-Vd_[i]),2);
             Ja += std::pow(acc[i],2);
             Jj += std::pow(jerk[i],2);
         }
@@ -139,7 +140,7 @@ private:
         {
             setConTypes(i, knitro::KTREnums::ConstraintType::ConLinear);
             setConLoBnds(i, 0.0);
-            setConUpBnds(i, v_[i]);
+            setConUpBnds(i, Vr_[i]);
         }
     }
 
@@ -186,13 +187,13 @@ private:
                 Hvel(0,1) = -1;
                 Hvel(1,0) = -1;
 
-                q[0] = -v_[0];
+                q[0] = -Vd_[0];
             }
             else if(i==N_)
             {
                 Hvel(N_, N_) = 1;
 
-                q[N_] = v_[N_-1];
+                q[N_] = Vd_[N_-1];
             }
             else
             {
@@ -200,7 +201,7 @@ private:
                 Hvel(i, i+1) = -1;
                 Hvel(i+1, i) = -1;
 
-                q[i] = v_[i-1] - v_[i];
+                q[i] = Vd_[i-1] - Vd_[i];
             }
         }
 
@@ -294,7 +295,8 @@ private:
     }
 
     int N_;
-    std::vector<double> v_;
+    std::vector<double> Vr_;
+    std::vector<double> Vd_;
     std::array<double, 3> weight_;
     double dt_;
     double Smax_;
