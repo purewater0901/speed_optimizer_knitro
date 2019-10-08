@@ -16,9 +16,12 @@ public:
                       const std::array<double, 3>& weight,
                       const double dt,
                       const double Smin,
-                      const double Smax)
-            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
-    : KTRProblem(N+3, N), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0)
+                      const double Smax,
+                      const double V0,
+                      const double a0,
+                      const double j0)
+            //: KTRProblem(N+3, N, 0, 4*N+6), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0),V0_(V0), a0_(a0), j0_(j0)
+    : KTRProblem(N+3, N), N_(N), Vr_(Vr), Vd_(Vd), weight_(weight), dt_(dt), Smin_(Smin), Smax_(Smax), p_(0.0), V0_(V0), a0_(a0), j0_(j0)
     {
         setObjectiveProperties();
         setVariableProperties();
@@ -123,14 +126,24 @@ private:
     {
         setVarLoBnds(0, Smin_);
         setVarUpBnds(0, Smin_);
+        setVarLoBnds(1, dt_*V0_+Smin_);
+        setVarUpBnds(1, dt_*V0_+Smin_);
+        setVarLoBnds(2, a0_*dt_*dt_+2*dt_*V0_+Smin_);
+        setVarUpBnds(2, a0_*dt_*dt_+2*dt_*V0_+Smin_);
+        setVarLoBnds(3, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
+        setVarUpBnds(3, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
 
-        for(int i=1; i<N_+3; ++i)
+        for(int i=4; i<N_+3; ++i)
         {
             setVarLoBnds(i, Smin_);
             setVarUpBnds(i, Smax_);
         }
 
-        for(int i=0; i<N_+3; ++i)
+        setXInitial(0, Smin_);
+        setXInitial(1, dt_*V0_+Smin_);
+        setXInitial(2, a0_*dt_*dt_+2*dt_*V0_+Smin_);
+        setXInitial(3, j0_*std::pow(dt_,3)+3*a0_*std::pow(dt_,2)+3*dt_*V0_+Smin_);
+        for(int i=4; i<N_+3; ++i)
             setXInitial(i, Smin_);
     }
 
@@ -304,6 +317,9 @@ private:
     Eigen::MatrixXd H_;
     Eigen::VectorXd q_;
     double p_;
+    double V0_;
+    double a0_;
+    double j0_;
 };
 
 

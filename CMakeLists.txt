@@ -26,6 +26,7 @@ endif()
 include_directories(include)
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories($ENV{KNITRODIR}/include)
+include_directories(/home/yutaka/knitro-12.0.0-z-Linux-64/include)
 
 set(KTR_RELEASE 1200)
 set(KNITRO_LIB  libknitro${KTR_RELEASE}.so gfortran)

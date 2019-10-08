@@ -24,8 +24,11 @@ int main()
     double T = 20;
     double dt = 0.1;
     int N = int(T/dt);
+    double V0 = 0.0;
+    double a0 = 0.0;
+    double j0 = 0.0;
 
-    std::array<double, 3> weight = {10, 0.1, 0.1};
+    std::array<double, 3> weight = {15, 0.1, 0.1};
 
     //set speed
     std::vector<double> Vr;  //restricted speed
@@ -55,7 +58,7 @@ int main()
         Vd[i] = Vr[i]-1.0;
     }
 
-    PositionOptimizer instance(N, Vr, Vd, weight, dt, Smin, Smax);
+    PositionOptimizer instance(N, Vr, Vd, weight, dt, Smin, Smax, V0, a0, j0);
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
     //knitro::KTRSolver solver(&instance);
     int solveStatus = solver.solve();
