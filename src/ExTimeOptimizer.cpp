@@ -25,30 +25,37 @@ cv::Point2i cv_offset2(float x, float y)
 
 int main()
 {
-    int N = 200;
+    int N = 100;
     std::string filename = "../position_result.csv";
 
     std::vector<double> Vr;
+    std::vector<double> Ar;  //acceleration restriction
+    std::vector<double> Ac;  //comfort acceleration restriction
     Vr.resize(N);
+    Ar.resize(N);
+    Ac.resize(N);
+
     for(size_t i=1; i<Vr.size()/3; ++i)
         Vr[i] = 3.0;
 
-    for(size_t i=Vr.size()/3; i<Vr.size()*2/3; ++i)
-        Vr[i] = 4.0;
+    for(size_t i=Vr.size()/3; i<Vr.size(); ++i)
+        Vr[i] = 0.0;
 
-    for(size_t i=Vr.size()*2/3; i<Vr.size(); ++i)
-        Vr[i] = 2.0;
+    Vr[0] = 2.0;
 
-    Vr[0] = 1.0;
-    Vr[Vr.size()-1] = 0.0;
+    for(int i=0; i<Ar.size(); ++i)
+    {
+        Ar[i] = 1.2;
+        Ac[i] = 0.8;
+    }
 
     double ds = 0.1;
     double a0 = 0.0;
 
-    std::array<double, 3> weight = {1.0, 9.7, 0};
+    std::array<double, 4> weight = {1.0, 0.025, 0, 0.02};
 
     // Create a problem instance.
-    TimeOptimizer instance(N, Vr, weight, ds, a0);
+    TimeOptimizer instance(N, Vr, Ar, Ac, weight, ds, a0);
 
     // Create a solver
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
@@ -62,9 +69,11 @@ int main()
     /*  Write to file*/
     std::ofstream writing_file;
     writing_file.open(filename, std::ios::out);
-    writing_file << "position" << "," << "reference_speed" <<  "," << "result_speed" << std::endl;
+    writing_file << "position" << "," << "reference_speed" <<  "," << "result_speed" <<  ","
+                 << "acceleration" << "," << "longitudinal_slack_variable"<<std::endl;
     for(int i=0; i<N; ++i)
-        writing_file << i*ds<< "," << Vr[i] << "," << std::sqrt(point[i]) << std::endl;
+        writing_file << i*ds<< "," << Vr[i] << "," << std::sqrt(point[i]) << "," << point[i+N] << ","
+                     << point[i+2*N] << std::endl;
     writing_file.close();
 
     cv::namedWindow("optimized_speed", cv::WINDOW_NORMAL);
