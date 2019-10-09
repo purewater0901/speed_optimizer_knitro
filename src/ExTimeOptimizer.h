@@ -15,10 +15,12 @@ public:
                   const std::vector<double>& Vr,
                   const std::vector<double>& Ar,
                   const std::vector<double>& Ac,
-                  const std::array<double, 4>& weight,
+                  const std::array<double, 5>& weight,
+                  const double m,
                   const double ds,
                   const double a0)
-                  : KTRProblem(3*N, 2*N), N_(N), weight_(weight), Vr_(Vr), Ar_(Ar), Ac_(Ac), epsilon_(1.0e-6), ds_(ds), a0_(a0)
+                  : KTRProblem(3*N, 2*N), N_(N), weight_(weight), Vr_(Vr), Ar_(Ar), Ac_(Ac), m_(m),
+                    epsilon_(1.0e-6), ds_(ds), a0_(a0)
     {
         setObjectiveProperties();
         setVariableProperties();
@@ -116,12 +118,13 @@ private:
         }
     }
 
-    std::array<double,4> weight_;
+    std::array<double,5> weight_;
     std::vector<double> Vr_;
     std::vector<double> Ar_;
     std::vector<double> Ac_;
 
     const double epsilon_;
+    double m_;
     double ds_;
     double a0_;
     int N_;

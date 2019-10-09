@@ -43,19 +43,20 @@ int main()
 
     Vr[0] = 2.0;
 
-    for(int i=0; i<Ar.size(); ++i)
+    for(size_t i=0; i<Ar.size(); ++i)
     {
         Ar[i] = 1.2;
         Ac[i] = 0.8;
     }
 
+    double m = 500;
     double ds = 0.1;
     double a0 = 0.0;
 
-    std::array<double, 4> weight = {1.0, 0.025, 0, 0.02};
+    std::array<double, 5> weight = {1.0, 0.025, 0, 0.02, 0.02};
 
     // Create a problem instance.
-    TimeOptimizer instance(N, Vr, Ar, Ac, weight, ds, a0);
+    TimeOptimizer instance(N, Vr, Ar, Ac, weight, m, ds, a0);
 
     // Create a solver
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
