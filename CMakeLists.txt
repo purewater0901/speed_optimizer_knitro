@@ -41,3 +41,6 @@ target_link_libraries(ExSpeedOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_L
 
 add_executable(ExPositionOptimizer src/ExPositionOptimizer.cpp)
 target_link_libraries(ExPositionOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
+
+add_executable(ExTimeOptimizer src/ExTimeOptimizer.cpp)
+target_link_libraries(ExTimeOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
