@@ -6,7 +6,6 @@ data = pd.read_csv('../position_result.csv')
 
 data.plot(x='position')
 
-plt.ylim([0, 10])
 plt.xlabel('position[m]')
 plt.ylabel('speed[m/s]')
 plt.title('time optimized speed')

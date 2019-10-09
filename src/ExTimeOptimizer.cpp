@@ -22,12 +22,57 @@ cv::Point2i cv_offset2(float x, float y)
     return output;
 }
 
+std::vector<std::string> split(std::string& input, char delimiter)
+{
+    std::istringstream stream(input);
+    std::string field;
+    std::vector<std::string> result;
+    while (getline(stream, field, delimiter)) {
+        result.push_back(field);
+    }
+    return result;
+}
 
 int main()
 {
     int N = 100;
+    std::string waypointFilename = "../data/saved_waypoints.csv";
     std::string filename = "../position_result.csv";
 
+    /* reading file */
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> yaw;
+    x.reserve(N);
+    y.reserve(N);
+    yaw.reserve(N);
+
+    std::ifstream ifs(waypointFilename);
+    if(!ifs)
+        return 1;
+
+    std::string line;
+    int deleteSize = 10;
+    int count = 0;
+    while(getline(ifs, line))
+    {
+        if(count<deleteSize)
+        {
+            count++;
+            continue;
+        }
+        else if(count > N+deleteSize-1)
+            break;
+        std::vector<std::string> strvec = split(line,',');
+
+        x.push_back(std::stod(strvec.at(0)));
+        y.push_back(std::stod(strvec.at(1)));
+        yaw.push_back(std::stod(strvec.at(3)));
+        count++;
+    }
+    Waypoints waypoints(x, y, yaw);
+
+    // speed restriction and acceleration restriction
     std::vector<double> Vr;
     std::vector<double> Ar;  //acceleration restriction
     std::vector<double> Ac;  //comfort acceleration restriction
@@ -35,13 +80,13 @@ int main()
     Ar.resize(N);
     Ac.resize(N);
 
-    for(size_t i=1; i<Vr.size()/3; ++i)
-        Vr[i] = 3.0;
+    for(size_t i=1; i<Vr.size()/2; ++i)
+        Vr[i] = 2.0;
 
-    for(size_t i=Vr.size()/3; i<Vr.size(); ++i)
-        Vr[i] = 0.0;
+    for(size_t i=Vr.size()/2; i<Vr.size(); ++i)
+        Vr[i] = 4.0;
 
-    Vr[0] = 2.0;
+    Vr[0] = 1.0;
 
     for(size_t i=0; i<Ar.size(); ++i)
     {
@@ -49,6 +94,7 @@ int main()
         Ac[i] = 0.8;
     }
 
+    // another information
     double m = 500;
     double ds = 0.1;
     double a0 = 0.0;
@@ -56,7 +102,7 @@ int main()
     std::array<double, 5> weight = {1.0, 0.025, 0, 0.02, 0.02};
 
     // Create a problem instance.
-    TimeOptimizer instance(N, Vr, Ar, Ac, weight, m, ds, a0);
+    TimeOptimizer instance(N, Vr, Ar, Ac, weight, waypoints, m, ds, a0);
 
     // Create a solver
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);

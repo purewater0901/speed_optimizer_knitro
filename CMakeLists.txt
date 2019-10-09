@@ -10,10 +10,11 @@
 # need separate build folders for Win32 and Win64
 # The makefile will be created there. It uses KNITRODIR environment variable.
 
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 3.0.1)
 
 project(KnitroExamples)
 set(CMAKE_CXX_STANDARD 11)
+set(KNITRODIR /home/yutaka/knitro-12.0.0-z-Linux-64)
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -25,7 +26,7 @@ endif()
 
 include_directories(include)
 include_directories(${EIGEN3_INCLUDE_DIR})
-include_directories($ENV{KNITRODIR}/include)
+include_directories(${KNITRODIR}/include)
 
 set(KTR_RELEASE 1200)
 set(KNITRO_LIB  libknitro${KTR_RELEASE}.so gfortran)
@@ -34,7 +35,8 @@ if (APPLE)
   set(KNITRO_LIB "libknitro.dylib")
 endif()
 
-link_directories($ENV{KNITRODIR}/lib)
+link_directories(${KNITRODIR}/lib)
+
 
 add_executable(ExSpeedOptimizer src/ExSpeedOptimizer.cpp)
 target_link_libraries(ExSpeedOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
