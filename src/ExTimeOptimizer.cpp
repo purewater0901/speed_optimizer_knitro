@@ -24,8 +24,8 @@ cv::Point2i cv_offset2(float x, float y)
 
 int main()
 {
-    double predictDistance = 10.0;
-    double ds = 0.1;
+    double predictDistance = 50.0;
+    double ds = 0.5;
     std::string waypointFilename = "../data/saved_waypoints.csv";
     std::string filename = "../position_result.csv";
 

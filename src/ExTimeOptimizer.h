@@ -31,12 +31,12 @@ public:
     {
         /*
          * @ variables
-         * b --- speed N
-         * a --- acceleration N
-         * slack lon --- longitudinal slack variables N
-         * slack lat --- lateral slack variables N
-         * input lon --- longitudinal input N
-         * input lat --- lateral input N
+         * b --- speed 0~N
+         * a --- acceleration N~2N
+         * slack lon --- longitudinal slack variables 2N~3N
+         * slack lat --- lateral slack variables 3N~4N
+         * input lon --- longitudinal input 4N~5N
+         * input lat --- lateral input 5N~6N
          */
         setObjectiveProperties();
         setVariableProperties();
@@ -71,19 +71,22 @@ public:
         double Jt = 0.0;
         double Js = 0.0;
         double Jv = 0.0;
-        double Ls = 0.0; //Longitudinal slack variable
+        double LonSlack = 0.0; //Longitudinal slack variable
+        double LatSlack = 0.0; //Longitudinal slack variable
 
         for(int i=0; i<N_-1; ++i)
         {
             Jt += (2*ds_)/(std::sqrt(x[i])+std::sqrt(x[i+1])+epsilon_);
             Js += std::pow((x[i+N_+1] - x[i+N_])/ds_, 2);
             Jv += std::pow(x[i] - Vr_[i]*Vr_[i], 2)*ds_;
-            Ls += std::fabs(x[i+2*N_]);
+            LonSlack += std::fabs(x[i+2*N_]);
+            LatSlack += std::fabs(x[i+3*N_]);
         }
         Jv += std::pow(x[N_-1] - Vr_[N_-1]*Vr_[N_-1], 2)*ds_;
-        Ls += std::fabs(x[3*N_-1]);
+        LonSlack += std::fabs(x[3*N_-1]);
+        LatSlack += std::fabs(x[4*N_-1]);
 
-        return weight_[0]*Jt + weight_[1]*Js + weight_[2]*Jv + weight_[3]*Ls;
+        return weight_[0]*Jt + weight_[1]*Js + weight_[2]*Jv + weight_[3]*LonSlack + weight_[4]*LatSlack;
     }
 
 private:
