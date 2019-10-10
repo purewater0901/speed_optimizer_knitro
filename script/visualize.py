@@ -4,10 +4,10 @@ import pandas as pd
 
 data = pd.read_csv('../position_result.csv')
 
-data.plot(x='position')
+data.plot(x='time', figsize=(20,18))
 
 plt.ylim([-2.0, 5.0])
-plt.xlabel('position[m]')
+plt.xlabel('time[s]')
 plt.ylabel('speed[m/s]')
 plt.title('time optimized speed')
 plt.savefig('../result/time_optimized_speed.png')

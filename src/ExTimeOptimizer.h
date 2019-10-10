@@ -86,9 +86,9 @@ public:
 
         //time window
         double time = 0.0;
-        for(int i=0; i<40; ++i)
+        for(int i=0; i<10; ++i)
             time += ds_/(std::sqrt(x[i])+epsilon_);
-        c[7*N_-6] = time-20.0;
+        c[7*N_-6] = time-100.0;
 
         double Jt = 0.0;
         double Js = 0.0;
@@ -193,7 +193,7 @@ private:
 
         setConTypes(7*N_-6, knitro::KTREnums::ConstraintType::ConGeneral);
         setConLoBnds(7*N_-6, 0);
-        setConUpBnds(7*N_-6, 80);
+        setConUpBnds(7*N_-6, 10);
     }
 
     std::array<double,5> weight_;

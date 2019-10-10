@@ -6,8 +6,8 @@ data = pd.read_csv('../position_result.csv')
 
 data.plot(x='position', y='time')
 for i in range(-10,10):
-    plt.vlines(20+i*0.01, 0, 20, colors='black')
-    plt.vlines(20+i*0.01, 80, 90, colors='black')
+    plt.vlines(5+i*0.01, 0, 100, colors='black')
+    #plt.vlines(20+i*0.01, 100, 150, colors='black')
 
 plt.xlabel('position[m]')
 plt.ylabel('time[s]')
