@@ -24,8 +24,8 @@ cv::Point2i cv_offset2(float x, float y)
 
 int main()
 {
-    double predictDistance = 20.0;
-    double ds = 0.2;
+    double predictDistance = 50.0;
+    double ds = 0.5;
     std::string waypointFilename = "../data/saved_waypoints.csv";
     std::string filename = "../position_result.csv";
 
@@ -75,7 +75,7 @@ int main()
     }
 
 
-    std::array<double, 5> weight = {1.0, 5.0, 0.0, 10, 10};
+    std::array<double, 5> weight = {0.0, 5.0, 0.1, 10, 10};
 
     // Create a problem instance.
     TimeOptimizer instance(N, Vr, Vd, Arlon, Arlat, Aclon, Aclat, weight, referencePath, m, ds, V0, a0, mu);
@@ -89,16 +89,28 @@ int main()
 
     const std::vector<double>& point = solver.getXValues();
 
+    //get time
+    std::vector<double> timeVector(N, 0.0);
+    for(size_t i=1; i<timeVector.size(); ++i)
+    {
+        if(std::sqrt(point[i])<1e-6)
+            timeVector[i] = timeVector[i-1];
+        else
+            timeVector[i] = timeVector[i-1] + ds/std::sqrt(point[i]);
+    }
+
     /*  Write to file*/
     std::ofstream writing_file;
     writing_file.open(filename, std::ios::out);
     writing_file << "position" << ","
+                 << "time" << ","
                  << "reference_speed" <<  "," << "desired_speed" << ","
                  << "result_speed" <<  ","
                  << "longitudinal acceleration" << "," << "lateral acceleration" << ","
                  << "longitudinal_slack_variable" << "," << "lateral_slack_variable" <<std::endl;
     for(int i=0; i<N; ++i)
         writing_file << i*ds<< ","
+                     << timeVector[i] << ","
                      << Vr[i] << "," << Vd[i] << ","
                      << std::sqrt(point[i]) << ","
                      << point[i+N] << "," << point[i+5*N]/m << ","

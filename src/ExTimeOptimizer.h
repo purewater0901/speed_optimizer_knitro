@@ -27,7 +27,7 @@ public:
                   const double V0,
                   const double a0,
                   const double mu)
-                  : KTRProblem(6*N, 5*N+2*(N-3)), N_(N), weight_(weight), referencePath_(referencePath),
+                  : KTRProblem(6*N, 5*N+2*(N-3)+1), N_(N), weight_(weight), referencePath_(referencePath),
                     Vr_(Vr), Vd_(Vd), Arlon_(Arlon), Arlat_(Arlat), Aclon_(Aclon), Aclat_(Aclat),
                     m_(m), epsilon_(1.0e-6), ds_(ds), V0_(V0), a0_(a0), mu_(mu), g_(9.80665)
     {
@@ -84,6 +84,12 @@ public:
             c[(i-2)+6*N_-3] = lefty - (ry2 * x[i] + ry1 * x[i+N_]);
         }
 
+        //time window
+        double time = 0.0;
+        for(int i=0; i<40; ++i)
+            time += ds_/(std::sqrt(x[i])+epsilon_);
+        c[7*N_-6] = time-20.0;
+
         double Jt = 0.0;
         double Js = 0.0;
         double Jv = 0.0;
@@ -94,11 +100,11 @@ public:
         {
             Jt += (2*ds_)/(std::sqrt(x[i])+std::sqrt(x[i+1])+epsilon_);
             Js += std::pow((x[i+N_+1] - x[i+N_])/ds_, 2);
-            Jv += std::pow(x[i] - Vd_[i]*Vd_[i], 2)*ds_;
+            Jv += std::fabs(x[i] - Vd_[i]*Vd_[i])*ds_;
             LonSlack += std::fabs(x[i+2*N_]);
             LatSlack += std::fabs(x[i+3*N_]);
         }
-        Jv += std::pow(x[N_-1] - Vd_[N_-1]*Vd_[N_-1], 2)*ds_;
+        Jv += std::fabs(x[N_-1] - Vd_[N_-1]*Vd_[N_-1])*ds_;
         LonSlack += std::fabs(x[3*N_-1]);
         LatSlack += std::fabs(x[4*N_-1]);
 
@@ -184,6 +190,10 @@ private:
             setConLoBnds((i-2)+6*N_-3, 0.0);
             setConUpBnds((i-2)+6*N_-3, 0.0);
         }
+
+        setConTypes(7*N_-6, knitro::KTREnums::ConstraintType::ConGeneral);
+        setConLoBnds(7*N_-6, 0);
+        setConUpBnds(7*N_-6, 80);
     }
 
     std::array<double,5> weight_;
