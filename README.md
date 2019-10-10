@@ -4,7 +4,7 @@
 This repository shows a speed optimization method based on a fixed path. 
 
 ### Usage
-1. First step
+1. Clone this repository 
 ```
 git clone https://github.com/purewater0901/speed_optimizer_knitro.git
 cd speed_optimizer_knitro
