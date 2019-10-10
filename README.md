@@ -4,9 +4,17 @@
 This repository shows a speed optimization method based on a fixed path. 
 
 ### Usage
+1. First step
 ```
 git clone https://github.com/purewater0901/speed_optimizer_knitro.git
 cd speed_optimizer_knitro
+```
+
+2. modify knitro path in CMakeLists.txt
+
+
+3. build
+```
 mkdir build & cd build
 cmake ..
 make
