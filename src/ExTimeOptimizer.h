@@ -7,24 +7,37 @@
 #include <cmath>
 #include "KTRSolver.h"
 #include "KTRProblem.h"
-#include "Waypoints.h"
+#include "ReferencePath/ReferencePath.h"
+#include "ReferencePath/ReferencePath.h"
 
 class TimeOptimizer : public knitro::KTRProblem
 {
 public:
     TimeOptimizer(const int N,
                   const std::vector<double>& Vr,
-                  const std::vector<double>& Ar,
-                  const std::vector<double>& Ac,
+                  const std::vector<double>& Arlon,
+                  const std::vector<double>& Arlat,
+                  const std::vector<double>& Aclon,
+                  const std::vector<double>& Aclat,
                   const std::array<double, 5>& weight,
-                  const Waypoints& waypoints,
+                  const ReferencePath& referencePath,
                   const double m,
                   const double ds,
-                  const double a0)
-                  : KTRProblem(3*N, 2*N), N_(N), weight_(weight), waypoints_(waypoints),
-                    Vr_(Vr), Ar_(Ar), Ac_(Ac),
-                    m_(m), epsilon_(1.0e-6), ds_(ds), a0_(a0)
+                  const double a0,
+                  const double mu)
+                  : KTRProblem(6*N, 5*N), N_(N), weight_(weight), referencePath_(referencePath),
+                    Vr_(Vr), Arlon_(Arlon), Arlat_(Arlat), Aclon_(Aclon), Aclat_(Aclat),
+                    m_(m), epsilon_(1.0e-6), ds_(ds), a0_(a0), mu_(mu), g_(9.80665)
     {
+        /*
+         * @ variables
+         * b --- speed N
+         * a --- acceleration N
+         * slack lon --- longitudinal slack variables N
+         * slack lat --- lateral slack variables N
+         * input lon --- longitudinal input N
+         * input lat --- lateral input N
+         */
         setObjectiveProperties();
         setVariableProperties();
         setConstraintProperties();
@@ -35,13 +48,25 @@ public:
                       double* const objGrad,
                       double* const jac)
     {
+        /* constraint1 speed and acceleration constraints*/
         // Linear equality constraint.
         for(int i=0; i<N_-1; ++i)
             c[i] = (x[i+1]-x[i])/ds_ - 2*x[i+N_];
         c[N_-1] = 0.0;
 
+        /* constraint2 longitudinal and lateral acceleration*/
         for(int i=0; i<N_; ++i)
-            c[i+N_] = Ac_[i] + x[i+2*N_] - std::fabs(x[i+N_]);
+        {
+            c[i+N_]   = Aclon_[i] + x[i+2*N_] - std::fabs(x[i+N_]);      //longitudinal
+            c[i+2*N_] = Aclat_[i] + x[1+3*N_] - std::fabs(x[i+5*N_]/m_); //lateral
+        }
+
+        /* constraint3 friction circle */
+        for(int i=0; i<N_; ++i)
+        {
+            c[i+3*N_] = mu_*m_*g_ - std::sqrt(x[i+4*N_]*x[i+4*N_] + x[i+5*N_]*x[i+5*N_]);
+            c[i+4*N_] = m_*Arlon_[i] - x[i+4*N_];
+        }
 
         double Jt = 0.0;
         double Js = 0.0;
@@ -71,6 +96,7 @@ private:
 
     void setVariableProperties()
     {
+        // constraint for speed variables
         for(int i=0; i<N_; ++i)
         {
             if (i == 0)
@@ -85,24 +111,25 @@ private:
             }
         }
 
+        // constraint for acceleration variables
         for(int i=N_+1; i<2*N_-1; ++i)
         {
-            setVarLoBnds(i, -Ar_[i-N_]);
-            setVarUpBnds(i, Ar_[i-N_]);
+            setVarLoBnds(i, -Arlon_[i-N_]);
+            setVarUpBnds(i, Arlon_[i-N_]);
         }
         setVarLoBnds(N_, a0_);
         setVarUpBnds(N_, a0_);
         setVarLoBnds(2*N_-1, 0.0);
         setVarUpBnds(2*N_-1, 0.0);
 
-        // constraint for longitudinal slack variables
-        for(int i=2*N_; i<3*N_; ++i)
+        // constraint for longitudinal  and lateral slack variables
+        for(int i=2*N_; i<4*N_; ++i)
         {
             setVarLoBnds(i, 0);
             setVarUpBnds(i, KTR_INFBOUND);
         }
 
-        for(int i=0; i<3*N_; ++i)
+        for(int i=0; i<6*N_; ++i)
             setXInitial(i, 0.0);
     }
 
@@ -117,20 +144,34 @@ private:
             setConTypes(i+N_, knitro::KTREnums::ConstraintType::ConGeneral);
             setConLoBnds(i+N_, 0.0);
             setConUpBnds(i+N_, KTR_INFBOUND);
+            setConTypes(i+2*N_, knitro::KTREnums::ConstraintType::ConGeneral);
+            setConLoBnds(i+2*N_, 0.0);
+            setConUpBnds(i+2*N_, KTR_INFBOUND);
+
+            setConTypes(i+3*N_, knitro::KTREnums::ConstraintType::ConGeneral);
+            setConLoBnds(i+3*N_, 0.0);
+            setConUpBnds(i+3*N_, KTR_INFBOUND);
+            setConTypes(i+4*N_, knitro::KTREnums::ConstraintType::ConGeneral);
+            setConLoBnds(i+4*N_, 0.0);
+            setConUpBnds(i+4*N_, KTR_INFBOUND);
         }
     }
 
     std::array<double,5> weight_;
     std::vector<double> Vr_;
-    std::vector<double> Ar_;
-    std::vector<double> Ac_;
-    Waypoints waypoints_;
+    std::vector<double> Arlon_;
+    std::vector<double> Arlat_;
+    std::vector<double> Aclon_;
+    std::vector<double> Aclat_;
+    ReferencePath referencePath_;
 
     const double epsilon_;
     double m_;
     double ds_;
     double a0_;
     int N_;
+    double mu_;
+    const double g_;
 };
 
 

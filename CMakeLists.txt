@@ -37,12 +37,11 @@ endif()
 
 link_directories(${KNITRODIR}/lib)
 
-
 add_executable(ExSpeedOptimizer src/ExSpeedOptimizer.cpp)
 target_link_libraries(ExSpeedOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
 
 add_executable(ExPositionOptimizer src/ExPositionOptimizer.cpp)
 target_link_libraries(ExPositionOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})
 
-add_executable(ExTimeOptimizer src/ExTimeOptimizer.cpp)
+add_executable(ExTimeOptimizer src/ExTimeOptimizer.cpp src/Waypoint/Waypoints.cpp)
 target_link_libraries(ExTimeOptimizer ${KNITRO_LIB} ${CMAKE_DL_LIBS} ${OpenCV_LIBS})

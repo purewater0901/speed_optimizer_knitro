@@ -22,63 +22,29 @@ cv::Point2i cv_offset2(float x, float y)
     return output;
 }
 
-std::vector<std::string> split(std::string& input, char delimiter)
-{
-    std::istringstream stream(input);
-    std::string field;
-    std::vector<std::string> result;
-    while (getline(stream, field, delimiter)) {
-        result.push_back(field);
-    }
-    return result;
-}
-
 int main()
 {
-    int N = 100;
+    double predictDistance = 10.0;
+    double ds = 0.1;
     std::string waypointFilename = "../data/saved_waypoints.csv";
     std::string filename = "../position_result.csv";
 
     /* reading file */
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<double> yaw;
-    x.reserve(N);
-    y.reserve(N);
-    yaw.reserve(N);
-
-    std::ifstream ifs(waypointFilename);
-    if(!ifs)
-        return 1;
-
-    std::string line;
-    int deleteSize = 10;
-    int count = 0;
-    while(getline(ifs, line))
-    {
-        if(count<deleteSize)
-        {
-            count++;
-            continue;
-        }
-        else if(count > N+deleteSize-1)
-            break;
-        std::vector<std::string> strvec = split(line,',');
-
-        x.push_back(std::stod(strvec.at(0)));
-        y.push_back(std::stod(strvec.at(1)));
-        yaw.push_back(std::stod(strvec.at(3)));
-        count++;
-    }
-    Waypoints waypoints(x, y, yaw);
+    Waypoints waypoints(predictDistance, waypointFilename);
+    ReferencePath referencePath(waypoints.x_, waypoints.y_, ds);
+    int N = referencePath.x_.size();
 
     // speed restriction and acceleration restriction
     std::vector<double> Vr;
-    std::vector<double> Ar;  //acceleration restriction
-    std::vector<double> Ac;  //comfort acceleration restriction
+    std::vector<double> Arlon;  //acceleration longitudinal restriction
+    std::vector<double> Arlat;  //acceleration lateral restriction
+    std::vector<double> Aclon;  //comfort longitudinal acceleration restriction
+    std::vector<double> Aclat;  //comfort lateral acceleration restriction
     Vr.resize(N);
-    Ar.resize(N);
-    Ac.resize(N);
+    Arlon.resize(N);
+    Arlat.resize(N);
+    Aclon.resize(N);
+    Aclat.resize(N);
 
     for(size_t i=1; i<Vr.size()/2; ++i)
         Vr[i] = 2.0;
@@ -88,21 +54,23 @@ int main()
 
     Vr[0] = 1.0;
 
-    for(size_t i=0; i<Ar.size(); ++i)
+    for(size_t i=0; i<N; ++i)
     {
-        Ar[i] = 1.2;
-        Ac[i] = 0.8;
+        Arlon[i] = 1.2;
+        Arlat[i] = 0.2;
+        Aclon[i] = 0.8;
+        Aclat[i] = 0.1;
     }
 
     // another information
     double m = 500;
-    double ds = 0.1;
     double a0 = 0.0;
+    double mu = 0.8;
 
     std::array<double, 5> weight = {1.0, 0.025, 0, 0.02, 0.02};
 
     // Create a problem instance.
-    TimeOptimizer instance(N, Vr, Ar, Ac, weight, waypoints, m, ds, a0);
+    TimeOptimizer instance(N, Vr, Arlon, Arlat, Aclon, Aclat, weight, referencePath, m, ds, a0, mu);
 
     // Create a solver
     knitro::KTRSolver solver(&instance, KTR_GRADOPT_FORWARD, KTR_HESSOPT_BFGS);
